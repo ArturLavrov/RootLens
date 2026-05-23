@@ -4,6 +4,13 @@ import GlobalSearch from '../ui/GlobalSearch'
 
 const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [notifications, setNotifications] = useState<number>(0)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      const v = localStorage.getItem('sidebarCollapsed')
+      if (v !== null) return v === 'true'
+    } catch (e) {}
+    return typeof window !== 'undefined' && window.innerWidth < 768
+  })
 
   useEffect(() => {
     const t = setTimeout(() => {
@@ -11,10 +18,17 @@ const AppShell: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     }, 400)
     return () => clearTimeout(t)
   }, [])
+
+  useEffect(() => {
+    try { localStorage.setItem('sidebarCollapsed', String(sidebarCollapsed)) } catch (e) {}
+  }, [sidebarCollapsed])
+
+  const toggleSidebar = () => setSidebarCollapsed((s) => !s)
+
   return (
-    <div className="min-h-screen flex bg-[#0b1220] text-slate-200">
-      <aside className="w-64">
-        <Sidebar />
+    <div className="min-h-screen flex bg-[#0b1220] text-slate-200 relative">
+      <aside className={`${sidebarCollapsed ? 'w-20' : 'w-64'} transition-all duration-200 ease-in-out`}> 
+        <Sidebar collapsed={sidebarCollapsed} onToggle={toggleSidebar} />
       </aside>
 
       <div className="flex-1 flex flex-col">
