@@ -1,6 +1,6 @@
 # incidents/db.py
 from uuid import UUID
-from app.incidents.models import Incident
+from app.modules.incidents.models import Incident
 
 _incidents: list[Incident] = []
 

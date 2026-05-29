@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from app.incidents.restapi import router as incidents_router
+from app.modules.incidents.restapi.router import router as incidents_router
 
 app = FastAPI(title="RootLens API")
 
