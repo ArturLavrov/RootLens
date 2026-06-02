@@ -2,6 +2,7 @@ import React from 'react'
 import { useNavigate } from 'react-router-dom'
 import AppShell from '../../shared/components/layout/AppShell'
 import Avatar from '../../shared/components/ui/Avatar'
+import CreateIncidentModal from './CreateIncidentModal'
 
 type Incident = {
   id: string
@@ -29,6 +30,7 @@ function SeverityBadge({ severity }: { severity: Incident['severity'] }) {
 
 export default function IncidentsPage() {
   const navigate = useNavigate()
+  const [showCreateModal, setShowCreateModal] = React.useState(false)
 
   const LOGO_MAP: Record<string,string> = {
     Spotify: 'spotify.com',
@@ -93,7 +95,7 @@ export default function IncidentsPage() {
     <AppShell>
       <div className="p-6">
         <div className="flex items-center justify-end mb-4">
-          <button className="bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded">+ Declare Incident</button>
+          <button onClick={() => setShowCreateModal(true)} className="bg-violet-600 hover:bg-violet-500 text-white px-4 py-2 rounded">+ Declare Incident</button>
         </div>
 
         <div className="bg-[#0f1724] p-4 rounded-lg">
@@ -161,6 +163,8 @@ export default function IncidentsPage() {
             </div>
           </div>
         </div>
+
+        <CreateIncidentModal open={showCreateModal} onClose={() => setShowCreateModal(false)} />
       </div>
     </AppShell>
   )
