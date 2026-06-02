@@ -28,7 +28,7 @@ function SeverityBadge({ severity }: { severity: Incident['severity'] }) {
   return <span className="px-2 py-1 rounded text-xs bg-green-600">Low</span>
 }
 
-export default function IncidentsPage() {
+function IncidentsPage() {
   const navigate = useNavigate()
   const [showCreateModal, setShowCreateModal] = React.useState(false)
 
@@ -169,3 +169,5 @@ export default function IncidentsPage() {
     </AppShell>
   )
 }
+
+export default IncidentsPage
