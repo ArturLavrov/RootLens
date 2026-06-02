@@ -1,9 +1,10 @@
 from fastapi import APIRouter, HTTPException, status
 from fastapi.responses import JSONResponse
-from app.modules.incidents.models import Incident
+from app.modules.incidents.models import Incident, Client
 from app.modules.incidents.restapi.models import (
     CreateIncidentRequest,
     IncidentResponse,
+    ClientResponse
 )
 from app.modules.incidents.module import (
     declare_incident,
@@ -13,20 +14,43 @@ from app.modules.incidents.models import ValidationError, Error
 
 router = APIRouter(prefix="/incidents", tags=["Incidents"])
 
-def map_to_incident_model(incident):
-    #TODO: implement this method with a mapping logic
-    pass
+def map_to_incident_model(incident: Incident) -> IncidentResponse:
+    def map_to_client_response(client: Client) -> dict:
+        return {
+            "id": client.id,
+            "name": client.name,
+        }
 
+    return IncidentResponse(
+        id=str(incident.id),
+        public_id=incident.public_id,
+        title=incident.title,
+        description=incident.description,
+        severity=incident.severity,
+        affected_clients=[
+            map_to_client_response(client)
+            for client in incident.affected_clients
+        ],
+        affects_all_clients=incident.affects_all_clients,
+        reported_date=incident.reported_date,
+        created_on=incident.created_on,
+        modified_on=incident.modified_on,
+        status=incident.status,
+        priority=incident.priority,
+        impact=incident.impact,
+        environment=incident.environment,
+        participants=[],
+        communication_channels=[],
+        mitigation_steps=[],
+    )
 
-@router.post("",response_model=IncidentResponse,status_code=status.HTTP_201_CREATED,)
+@router.post("",status_code=status.HTTP_201_CREATED,)
 async def create_incident(request: CreateIncidentRequest):
     result = await declare_incident(request)
 
     match result:
         case Incident():
-            return JSONResponse(
-                status_code=status.HTTP_201_CREATED,
-            )
+            return JSONResponse(content=None, status_code=status.HTTP_201_CREATED)
 
         case ValidationError():
             raise HTTPException(
@@ -46,6 +70,9 @@ async def create_incident(request: CreateIncidentRequest):
 @router.get("", response_model=list[IncidentResponse])
 async def get_incidents():
     incidents = await get_all_incidents()
-    return [
-        map_to_incident_model(incident) for incident in incidents
-    ]
+    return [map_to_incident_model(incident) for incident in incidents]
+
+
+@router.get("/{id}",response_model=IncidentResponse)
+async def get_incident(id: str,) -> IncidentResponse:
+    pass
