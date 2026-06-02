@@ -1,11 +1,12 @@
 import React, { useState } from 'react'
 import Avatar from '../../shared/components/ui/Avatar'
 
-export default function CreateIncidentModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+export default function CreateIncidentModal({ open, onClose, onCreated }: { open: boolean; onClose: () => void; onCreated?: (inc?: any) => void }) {
   if (!open) return null
 
   const [title, setTitle] = useState('')
-  const [severity, setSeverity] = useState('High')
+  const [description, setDescription] = useState('')
+  const [severity, setSeverity] = useState('CRITICAL')
   const [environment, setEnvironment] = useState('PROD')
   const [startTime, setStartTime] = useState('')
   const [clients, setClients] = useState<string[]>([])
@@ -38,12 +39,46 @@ export default function CreateIncidentModal({ open, onClose }: { open: boolean; 
     setClients((prev) => prev.filter((_, i) => i !== idx))
   }
 
-  function submit(e: React.FormEvent) {
+  const [loading, setLoading] = useState(false)
+
+  async function submit(e: React.FormEvent) {
     e.preventDefault()
-    // TODO: hook up API
-    const payload = { title, severity, environment, startTime, clients }
-    console.log('Declare incident payload', payload)
-    onClose()
+    setLoading(true)
+
+    const affected_clients = clients.map((c) => ({ id: c.replace(/\s+/g, '-').toLowerCase(), name: c }))
+    const payload = {
+      title,
+      severity,
+      description: `${title} (declared via UI)`,
+      env: environment,
+      affected_clients,
+      affects_all_clients: false
+    }
+
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/v1/incidents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+
+      if (res.status === 201 || res.ok) {
+        console.log('Incident created')
+        let data = null
+        try { data = await res.json() } catch (_) { /* no json */ }
+        if (onCreated) onCreated(data)
+        onClose()
+      } else {
+        const text = await res.text()
+        console.error('Failed to create incident', res.status, text)
+        alert('Failed to create incident: ' + res.status)
+      }
+    } catch (err) {
+      console.error('Failed to call API', err)
+      alert('Network error when creating incident')
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -62,13 +97,19 @@ export default function CreateIncidentModal({ open, onClose }: { open: boolean; 
             <input value={title} onChange={(e) => setTitle(e.target.value)} required className="w-full bg-transparent border border-slate-800 rounded px-3 py-2 text-slate-100" placeholder="Brief incident title" />
           </div>
 
+          <div>
+            <label className="block text-xs text-slate-400 mb-1">Description</label>
+            <textarea value={description} onChange={(e) => setDescription(e.target.value)} required className="w-full bg-transparent border border-slate-800 rounded px-3 py-2 text-slate-100 h-24" placeholder="Describe the incident and impact" />
+          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs text-slate-400 mb-1">Severity</label>
               <select value={severity} onChange={(e) => setSeverity(e.target.value)} className="w-full bg-transparent border border-slate-800 rounded px-3 py-2 text-slate-100">
-                <option>High</option>
-                <option>Medium</option>
-                <option>Low</option>
+                <option>CRITICAL</option>
+                <option>HIGH</option>
+                <option>MEDIUM</option>
+                <option>LOW</option>
               </select>
             </div>
 
