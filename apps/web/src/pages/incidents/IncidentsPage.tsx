@@ -14,13 +14,8 @@ type Incident = {
   participants: string[]
 }
 
-const SAMPLE_INCIDENTS: Incident[] = [
-  { id: 'INC-050', title: 'Payment failures in EU region', severity: 'High', environment: 'Production', startTime: 'Nov 1, 14:12', clients: ['Spotify','Apple','Google','Microsoft','Amazon','Netflix','Uber','Airbnb','Salesforce','Stripe','PayPal','Square','Slack','Zoom','Dropbox','Atlassian','Hubspot','Shopify','Mailchimp','Reddit','Pinterest','TikTok','Snapchat','Twitch','Discord','Oracle','SAP','IBM','Cisco','Meta','WhatsApp','GitHub','Bitbucket','DigitalOcean','Heroku','Linode','Vercel','Netlify','Cloudflare','Fastly','Akamai','Zendesk','Okta','Auth0','NewRelic','Datadog','Sentry','Elastic','Kubernetes'], participants: ['Jane Doe','Alex P.','Maria L'] },
-  { id: 'INC-049', title: 'High latency on order service', severity: 'Medium', environment: 'Production', startTime: 'Oct 31, 09:44', clients: ['Shopify'], participants: ['Tom K','Sara','Liam B.'] },
-  { id: 'INC-048', title: 'RabbitMQ consumer lag', severity: 'High', environment: 'Production', startTime: 'Oct 30, 18:22', clients: ['AWS'], participants: ['Olivia R.','Noah S.','Emma G.'] },
-  { id: 'INC-047', title: 'Redis cluster performance drop', severity: 'Medium', environment: 'Production', startTime: 'Oct 29, 11:03', clients: ['RedisLabs'], participants: ['Lucas H.','Alex P.','Maria L'] },
-  { id: 'INC-046', title: 'DNS resolution errors', severity: 'Low', environment: 'Production', startTime: 'Oct 28, 10:51', clients: ['Zoom'], participants: ['Jane Doe','Tom K'] },
-]
+const SAMPLE_INCIDENTS: Incident[] = []
+
 
 function SeverityBadge({ severity }: { severity: Incident['severity'] }) {
   if (severity === 'High') return <span className="px-2 py-1 rounded text-xs bg-red-600">High</span>
@@ -28,9 +23,44 @@ function SeverityBadge({ severity }: { severity: Incident['severity'] }) {
   return <span className="px-2 py-1 rounded text-xs bg-green-600">Low</span>
 }
 
-function IncidentsPage() {
+export default function IncidentsPage() {
   const navigate = useNavigate()
   const [showCreateModal, setShowCreateModal] = React.useState(false)
+  const [incidents, setIncidents] = React.useState<Incident[]>(SAMPLE_INCIDENTS)
+  const [loadingIncidents, setLoadingIncidents] = React.useState(false)
+  const [totalIncidents, setTotalIncidents] = React.useState<number>(0)
+
+  async function fetchIncidents() {
+    setLoadingIncidents(true)
+    try {
+      const res = await fetch('http://127.0.0.1:8000/api/v1/incidents', { headers: { Accept: 'application/json' } })
+      if (!res.ok) {
+        console.error('Failed to fetch incidents', res.status)
+        return
+      }
+      const data = await res.json()
+      // Map API response to local Incident type
+      const mapped: Incident[] = (data || []).map((it: any) => ({
+        id: it.public_id || it.id,
+        title: it.title,
+        severity: (function(s){ const v = (s||'').toLowerCase(); if(v==='critical' || v==='high') return 'High'; if(v==='medium') return 'Medium'; return 'Low' })(it.severity),
+        environment: it.env || it.environment || 'Production',
+        startTime: it.reported_date || it.created_on || '',
+        clients: (it.affected_clients || []).map((c: any) => c.name || c.id),
+        participants: (it.participants || []).map((p: any) => p.display_name || p.email || '')
+      }))
+      setIncidents(mapped)
+      // Prefer explicit total from API when available, otherwise fallback to mapped length
+      const total = (data && (data.total || data.count || (data.meta && data.meta.total))) || mapped.length
+      setTotalIncidents(total)
+    } catch (err) {
+      console.error('Error fetching incidents', err)
+    } finally {
+      setLoadingIncidents(false)
+    }
+  }
+
+  React.useEffect(() => { fetchIncidents() }, [])
 
   const LOGO_MAP: Record<string,string> = {
     Spotify: 'spotify.com',
@@ -91,6 +121,17 @@ function IncidentsPage() {
     return `https://logo.clearbit.com/${domain}`
   }
 
+  function formatDate(iso?: string) {
+    if (!iso) return ''
+    try {
+      const d = new Date(iso)
+      if (isNaN(d.getTime())) return iso
+      return d.toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+    } catch (e) {
+      return iso
+    }
+  }
+
   return (
     <AppShell>
       <div className="p-6">
@@ -114,17 +155,17 @@ function IncidentsPage() {
               </thead>
 
               <tbody>
-                {SAMPLE_INCIDENTS.map((inc) => (
+                {incidents.map((inc) => (
                   <tr key={inc.id} role="button" onClick={() => navigate(`/incidents/${inc.id}`)} className="border-t border-slate-800 cursor-pointer hover:bg-slate-800/40 hover:border-slate-600">
-                    <td className="py-3 font-semibold text-slate-100 w-24">{inc.id}</td>
+                    <td className="py-3 font-semibold text-slate-100 w-24 whitespace-nowrap">{inc.id}</td>
 
-                    <td className="py-3 text-slate-400">{inc.title}</td>
+                    <td className="py-3 text-slate-400 pl-8">{inc.title}</td>
 
                     <td className="py-3"><SeverityBadge severity={inc.severity} /></td>
 
                     <td className="py-3 text-slate-300">{inc.environment}</td>
 
-                    <td className="py-3 text-slate-300">{inc.startTime}</td>
+                    <td className="py-3 text-slate-300">{formatDate(inc.startTime)}</td>
 
                     <td className="py-3">
                       <div className="flex items-center">
@@ -159,15 +200,14 @@ function IncidentsPage() {
             </table>
 
             <div className="mt-3 flex items-center justify-end">
-              <div className="text-xs text-slate-500">Showing {SAMPLE_INCIDENTS.length} recent incidents</div>
+              <div className="text-xs text-slate-500">Showing {incidents.length} of {totalIncidents} incidents</div>
             </div>
           </div>
         </div>
 
-        <CreateIncidentModal open={showCreateModal} onClose={() => setShowCreateModal(false)} />
+        <CreateIncidentModal open={showCreateModal} onClose={() => setShowCreateModal(false)} onCreated={() => fetchIncidents()} />
       </div>
     </AppShell>
   )
 }
 
-export default IncidentsPage
