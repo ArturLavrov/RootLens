@@ -4,7 +4,11 @@ import DashboardPage from '../pages/dashboard/DashboardPage'
 import IncidentsPage from '../pages/incidents/IncidentsPage'
 import InvestigationsPage from '../pages/investigations/InvestigationsPage'
 import PostmortemsPage from '../pages/postmortems/PostmortemsPage'
-const IncidentPage = React.lazy(() => import('../pages/incidents/IncidentPage').then(m => ({ default: (m as any).default || (m as any).IncidentPage })) );
+const IncidentPage = React.lazy(() => import('../pages/incidents/IncidentPage').then(mod => {
+  const comp = (mod && (mod as any).default) || (mod as any)
+  if (!comp) throw new Error('Lazy import for IncidentPage did not resolve to a component')
+  return { default: comp }
+}) );
 
 export default function Router() {
   return (
