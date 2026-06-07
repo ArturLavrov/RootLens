@@ -21,6 +21,10 @@ function IncidentPage() {
   const [loadingIncidents, setLoadingIncidents] = React.useState(false)
   const [totalIncidents, setTotalIncidents] = React.useState<number>(0)
 
+  // Incident description state (controlled React state so textarea is editable)
+  const [description, setDescription] = React.useState<string>(() => (window as any).__rl_incident_description || '');
+  React.useEffect(() => { try { (window as any).__rl_incident_description = description; const ev = new Event('rl:desc:change'); window.dispatchEvent(ev);} catch(e){} }, [description]);
+
   async function fetchIncidents() {
     setLoadingIncidents(true)
     try {
@@ -77,7 +81,6 @@ function IncidentPage() {
                   <span className="bg-slate-800 px-2 py-1 rounded">Status: Investigating</span>
                 </div>
 
-                <div className="mt-3 text-sm text-slate-500">Use the thumbnails to the right to preview the screens. This header matches mockup spacing and CTA placement.</div>
               </div>
             </div>
           </div>
@@ -183,66 +186,14 @@ function IncidentPage() {
               <div className="mb-4">
                 <label className="block text-xs text-slate-400 mb-1">Description</label>
                 <textarea
-                  value={(window as any).__rl_incident_description || ''}
-                  onChange={(e) => { (window as any).__rl_incident_description = e.target.value; const ev = new Event('rl:desc:change'); window.dispatchEvent(ev) }}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
                   placeholder="Describe the incident, observed behavior, and any important context."
                   className="w-full h-32 bg-transparent border border-slate-800 rounded px-3 py-2 text-slate-100 resize-vertical"
                 />
               </div>
 
-              <div>
-                <label className="block text-xs text-slate-400 mb-1">Attachments</label>
-                <div className="flex items-center gap-2">
-                  <input id="rl-attach-input" type="file" multiple className="text-sm text-slate-200" />
-                  <button id="rl-attach-clear" className="text-xs px-2 py-1 rounded bg-slate-800 text-slate-200">Clear</button>
-                </div>
-
-                <div id="rl-attach-list" className="mt-3 text-sm text-slate-400 space-y-2"></div>
-                <div className="mt-3 text-xs text-slate-500">Attach screenshots, logs or other files. Files are stored locally in the browser for this demo.</div>
-              </div>
-
-              <script dangerouslySetInnerHTML={{__html: `
-                (function(){
-                  const input = document.getElementById('rl-attach-input');
-                  const clearBtn = document.getElementById('rl-attach-clear');
-                  const list = document.getElementById('rl-attach-list');
-                  if(!input||!list) return;
-                  const filesState = (window as any).__rl_files = (window as any).__rl_files || [];
-
-                  function render() {
-                    list.innerHTML = '';
-                    filesState.forEach((f:any, idx:number) => {
-                      const row = document.createElement('div');
-                      row.className = 'flex items-center justify-between bg-slate-900/20 px-3 py-2 rounded';
-                      const left = document.createElement('div');
-                      left.className = 'flex items-center gap-3';
-                      const name = document.createElement('div');
-                      name.className = 'text-slate-100';
-                      name.textContent = f.name + ' (' + Math.round(f.size/1024) + ' KB)';
-                      left.appendChild(name);
-                      row.appendChild(left);
-                      const rm = document.createElement('button');
-                      rm.className = 'text-xs px-2 py-1 rounded bg-slate-800 text-slate-200';
-                      rm.textContent = 'Remove';
-                      rm.addEventListener('click', ()=>{ filesState.splice(idx,1); render(); });
-                      row.appendChild(rm);
-                      list.appendChild(row);
-                    });
-                  }
-
-                  input.addEventListener('change', (e:any)=>{
-                    const fl = Array.from(e.target.files || []);
-                    for(const f of fl) filesState.push(f);
-                    render();
-                    input.value = '';
-                  });
-
-                  clearBtn?.addEventListener('click', ()=>{ filesState.length = 0; render(); });
-
-                  render();
-                })();
-              `}} />
-            </div>
+<Attachments />            </div>
 
             <Mitigations />
           </div>
@@ -279,7 +230,6 @@ function IncidentPage() {
               {/* Inline script-like behavior implemented with React effects attached below */}
             </div>
 
-            <div className="text-xs text-slate-500">This is a demo chat UI; backend integration can be wired to /api/v1/assistant.</div>
 
             {/* Chat state and handlers implemented via a small embedded component */}
             <ChatWidget imgs={imgs} setMainIdx={setMainIdx} />
@@ -289,6 +239,75 @@ function IncidentPage() {
         <CreateIncidentModal open={showCreateModal} onClose={() => setShowCreateModal(false)} onCreated={() => fetchIncidents()} />
       </div>
     </AppShell>
+  )
+}
+
+function Attachments(){
+  const [files, setFiles] = React.useState<File[]>(() => (window as any).__rl_files || []);
+  const [urls, setUrls] = React.useState<string[]>(() => (window as any).__rl_file_urls || []);
+
+  React.useEffect(()=>{ (window as any).__rl_files = files; (window as any).__rl_file_urls = urls; }, [files, urls]);
+
+  React.useEffect(()=>{
+    // revoke urls on unmount
+    return () => { urls.forEach(u=>{ try{ URL.revokeObjectURL(u); }catch(e){} }); };
+  }, []);
+
+  function onChange(e: React.ChangeEvent<HTMLInputElement>){
+    const fl = Array.from(e.target.files || []);
+    const newUrls = fl.map(f => URL.createObjectURL(f));
+    setFiles(prev => [...prev, ...fl]);
+    setUrls(prev => [...prev, ...newUrls]);
+    e.currentTarget.value = '';
+  }
+  function removeAt(idx:number){
+    setFiles(prev => { const copy = [...prev]; copy.splice(idx,1); return copy; });
+    setUrls(prev => { const copy = [...prev]; const u = copy.splice(idx,1); try{ if(u && u[0]) URL.revokeObjectURL(u[0]); }catch(e){} return copy; });
+  }
+  function clearAll(){
+    urls.forEach(u=>{ try{ URL.revokeObjectURL(u); }catch(e){} });
+    setFiles([]); setUrls([]);
+  }
+
+  return (
+    <div>
+      <label className="block text-xs text-slate-400 mb-1">Attachments</label>
+      <div className="flex items-center gap-2">
+        <input id="rl-attach-input" type="file" multiple onChange={onChange} className="text-sm text-slate-200" />
+        <button type="button" onClick={clearAll} className="text-xs px-2 py-1 rounded bg-slate-800 text-slate-200">Clear</button>
+      </div>
+
+      <div id="rl-attach-list" className="mt-3 text-sm text-slate-400 space-y-2">
+        {files.map((f, idx) => (
+          <div key={idx} className="flex items-center justify-between bg-slate-900/20 px-3 py-2 rounded">
+            <div className="flex items-center gap-3">
+              {f.type.startsWith('image/') ? (
+                <img src={urls[idx]} className="w-10 h-10 object-cover rounded" alt="thumb" />
+              ) : (
+                <div className="w-10 h-10 rounded bg-slate-900/40 flex items-center justify-center text-xs text-slate-200">{(f.name||'').split('.').pop()?.toUpperCase() || 'FILE'}</div>
+              )}
+              <div className="text-slate-100">{f.name} ({Math.round(f.size/1024)} KB)</div>
+            </div>
+            <button type="button" onClick={()=>removeAt(idx)} className="text-xs px-2 py-1 rounded bg-slate-800 text-slate-200">Remove</button>
+          </div>
+        ))}
+      </div>
+
+      <div id="rl-attach-thumbs" className="mt-3 flex items-center gap-2 overflow-x-auto">
+        {files.map((f, idx) => (
+          <div key={idx} className="flex flex-col items-center text-xs text-slate-200">
+            {f.type.startsWith('image/') ? (
+              <img src={urls[idx]} className="w-20 h-14 object-cover rounded" alt="thumb" />
+            ) : (
+              <div className="w-20 h-14 rounded bg-slate-900/40 flex items-center justify-center text-sm text-slate-200">{(f.name||'').split('.').pop()?.toUpperCase() || 'FILE'}</div>
+            )}
+            <div className="mt-1 text-xs text-slate-300 truncate" style={{maxWidth: 90}}>{f.name}</div>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-3 text-xs text-slate-500">Attach screenshots, logs or other files. Files are stored locally in the browser for this demo.</div>
+    </div>
   )
 }
 
