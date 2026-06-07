@@ -98,7 +98,7 @@ function IncidentPage() {
             <div className="bg-[#071022] rounded-lg p-3 border border-slate-800 flex flex-col h-[640px]">
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-3">
-                  <img src="/assets/img/rootlens-logo-32.png" alt="RootLens" className="w-8 h-8 rounded" />
+                  <img src="/assets/img/logo.png" alt="RootLens" className="w-8 h-8 rounded" />
                   <div>
                     <div className="text-sm font-semibold text-slate-100">RootLens Assistant</div>
                     <div className="text-xs text-slate-400">Ask questions about this incident</div>
