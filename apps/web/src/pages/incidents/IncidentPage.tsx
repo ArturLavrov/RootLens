@@ -145,9 +145,11 @@ function ChatWidget({ imgs, setMainIdx }: { imgs: string[]; setMainIdx: (n: numb
     const input = document.getElementById('rl-chat-input') as HTMLInputElement | null
     const sendBtn = document.getElementById('rl-chat-send') as HTMLButtonElement | null
 
-    const messages: { id: number; sender: 'user' | 'assistant'; text: string }[] = [
-      { id: 0, sender: 'assistant', text: 'Hello — ask me about this incident.' }
+    const messages: { id: number; sender: 'user' | 'assistant'; html: string }[] = [
+      { id: 0, sender: 'assistant', html: '<div class="text-xs text-slate-400">Hello — ask me about this incident. I can suggest similar incidents and mitigation steps.</div>' }
     ]
+
+    function escapeHtml(s: string) { return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
 
     function renderMessages() {
       if (!container) return
@@ -159,7 +161,7 @@ function ChatWidget({ imgs, setMainIdx }: { imgs: string[]; setMainIdx: (n: numb
         el.className = m.sender === 'user' ? 'text-right' : ''
         const bubble = document.createElement('div')
         bubble.className = m.sender === 'user' ? 'inline-block bg-slate-700 text-white px-3 py-2 rounded' : 'inline-block bg-slate-800 text-slate-200 px-3 py-2 rounded'
-        bubble.textContent = m.text
+        bubble.innerHTML = m.html
         el.appendChild(bubble)
         wrapper.appendChild(el)
       })
@@ -168,19 +170,66 @@ function ChatWidget({ imgs, setMainIdx }: { imgs: string[]; setMainIdx: (n: numb
       end.id = 'rl-chat-end'
       container.appendChild(end)
       end.scrollIntoView({ behavior: 'smooth' })
+
+      // attach preview button handlers
+      const btns = container.querySelectorAll('.rl-preview-btn')
+      btns.forEach(b => {
+        // avoid attaching duplicate handlers
+        const existing = (b as any).__rl_handler
+        if (existing) return
+        const handler = (e: Event) => {
+          const idx = parseInt((b as HTMLElement).getAttribute('data-img') || '0', 10)
+          setMainIdx(idx)
+        }
+        ;(b as any).__rl_handler = handler
+        b.addEventListener('click', handler)
+      })
     }
 
     renderMessages()
 
+    function synthSimilar() {
+      // Simple mocked similar-incident results; replace with real search later
+      const items = [
+        { id: 'INC-101', title: 'Database connection timeout', severity: 'High', imgIdx: 0 },
+        { id: 'INC-087', title: 'API 503 spike', severity: 'Medium', imgIdx: 1 },
+        { id: 'INC-045', title: 'Background job failure', severity: 'Low', imgIdx: 2 }
+      ]
+
+      let html = '<div class="text-sm font-semibold text-slate-100 mb-2">Similar incidents</div><div class="space-y-2">'
+      items.forEach(it => {
+        html += `<div class="flex items-center justify-between bg-slate-900/20 px-3 py-2 rounded">` +
+                `<div>` +
+                  `<div class="text-sm text-slate-100 font-medium">${it.title}</div>` +
+                  `<div class="text-xs text-slate-400">ID: ${it.id} · ${it.severity}</div>` +
+                `</div>` +
+                `<button data-img="${it.imgIdx}" class="rl-preview-btn text-xs px-2 py-1 rounded bg-slate-800 text-slate-200">Preview</button>` +
+                `</div>`
+      })
+      html += '</div>'
+      return html
+    }
+
+    function synthMitigations() {
+      return '<div class="text-sm font-semibold text-slate-100 mb-2">Proposed steps</div>' +
+             '<ol class="list-decimal list-inside text-sm text-slate-400 space-y-1">' +
+             '<li>Collect logs and traces for the affected services to identify the root cause.</li>' +
+             '<li>Isolate the impacted instances and reroute traffic if possible.</li>' +
+             '<li>Apply a hotfix or rollback the last deployment if correlated with the issue.</li>' +
+             '<li>Scale up resources temporarily and monitor system metrics closely.</li>' +
+             '<li>After stabilizing, perform a post-incident review and follow-up remediation.</li>' +
+             '</ol>'
+    }
+
     function doSend(text: string) {
       if (!text) return
-      messages.push({ id: Date.now(), sender: 'user', text })
+      messages.push({ id: Date.now(), sender: 'user', html: `<div class="inline-block">${escapeHtml(text)}</div>` })
       renderMessages()
 
-      // Mock assistant reply (replace with real API call later)
+      // Mock assistant reply composed of similar incidents + mitigations
       setTimeout(() => {
-        const reply = `RootLens (demo): I can help with timeline and impact. You asked: "${text}"`
-        messages.push({ id: Date.now() + 1, sender: 'assistant', text: reply })
+        const replyHtml = `<div>${synthSimilar()}<div class="mt-3">${synthMitigations()}</div></div>`
+        messages.push({ id: Date.now() + 1, sender: 'assistant', html: replyHtml })
         renderMessages()
       }, 700)
     }
@@ -204,5 +253,4 @@ function ChatWidget({ imgs, setMainIdx }: { imgs: string[]; setMainIdx: (n: numb
 
   return null
 }
-
 export default IncidentPage
