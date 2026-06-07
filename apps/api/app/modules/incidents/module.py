@@ -1,5 +1,5 @@
 # incidents/module.p
-from app.modules.incidents.models import Incident, DeclareIncidentRequest, Error, ValidationError
+from app.modules.incidents.models import Incident, DeclareIncidentRequest, Error, NotFound, ValidationError
 from app.modules.incidents.db import db
 
 async def declare_incident(request: DeclareIncidentRequest,) -> Incident | ValidationError:
@@ -29,9 +29,13 @@ async def get_all_incidents() -> list[Incident] | Error:
     return incidents
 
 
-async def get_incident_by_id(incident_id: str) -> Incident | Error:
+async def get_incident_by_id(incident_id: str) -> Incident | NotFound | Error:
     """
     Return incident by identifier.
     """
     incident = db.get_incident_by_id(incident_id)
+
+    if incident is None:
+        return NotFound
+
     return incident

@@ -9,6 +9,7 @@ from app.modules.incidents.restapi.models import (
 from app.modules.incidents.module import (
     declare_incident,
     get_all_incidents,
+    get_incident_by_id
 )
 from app.modules.incidents.models import ValidationError, Error
 
@@ -46,6 +47,7 @@ def map_to_incident_model(incident: Incident) -> IncidentResponse:
 
 @router.post("",status_code=status.HTTP_201_CREATED,)
 async def create_incident(request: CreateIncidentRequest):
+    #TODO: Implement ACL
     result = await declare_incident(request)
 
     match result:
@@ -75,4 +77,5 @@ async def get_incidents():
 
 @router.get("/{id}",response_model=IncidentResponse)
 async def get_incident(id: str,) -> IncidentResponse:
-    pass
+    incidents = await get_incident_by_id(id)
+

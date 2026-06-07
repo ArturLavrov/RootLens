@@ -89,38 +89,250 @@ function IncidentPage() {
           {/* Left widgets column */}
           <div className="w-full lg:w-64 flex flex-col gap-4">
             <div className="bg-[#071022] rounded-lg p-4 border border-slate-800">
-              <h3 className="text-sm font-semibold text-slate-100 mb-3">Participants</h3>
-              <div className="flex items-center gap-3">
-                <Avatar name="On Call Engineer" size={40} src="/assets/img/avatar-oncall.png" />
-                <div className="flex-1">
-                  <div className="text-sm text-slate-100 font-medium">Alex Johnson</div>
-                  <div className="text-xs text-slate-400">On-call · SRE</div>
+              <div className="flex items-center justify-between mb-3">
+                <h3 className="text-sm font-semibold text-slate-100">Participants (7)</h3>
+                <button className="text-xs px-2 py-1 rounded bg-violet-600 text-white">Invite</button>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <Avatar name="Alex Johnson" size={40} src="/assets/img/avatar-alex.png" />
+                  <div>
+                    <div className="text-sm text-slate-100 font-medium">Alex Johnson</div>
+                    <div className="text-xs text-slate-400">On-call · SRE</div>
+                  </div>
                 </div>
-                <div className="flex flex-col gap-1">
-                  <a href="tel:+123456789" className="text-xs px-2 py-1 rounded bg-slate-800 text-slate-200">Call</a>
-                  <a href="mailto:alex@example.com" className="text-xs px-2 py-1 rounded bg-slate-800 text-slate-200">Email</a>
+
+                <div className="flex items-center gap-3">
+                  <Avatar name="Samantha Lee" size={40} src="/assets/img/avatar-samantha.png" />
+                  <div>
+                    <div className="text-sm text-slate-100 font-medium">Samantha Lee</div>
+                    <div className="text-xs text-slate-400">Backend Engineer</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Avatar name="Priya Nair" size={40} src="/assets/img/avatar-priya.png" />
+                  <div>
+                    <div className="text-sm text-slate-100 font-medium">Priya Nair</div>
+                    <div className="text-xs text-slate-400">Frontend Engineer</div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Avatar name="Mark Rivera" size={40} src="/assets/img/avatar-mark.png" />
+                  <div>
+                    <div className="text-sm text-slate-100 font-medium">Mark Rivera</div>
+                    <div className="text-xs text-slate-400">Product Owner</div>
+                  </div>
                 </div>
               </div>
 
-              <div className="mt-3 text-xs text-slate-400">Other participants: <span className="text-slate-200">Samantha, Priya</span></div>
+              <div className="mt-4">
+                <div className="text-xs text-slate-400 mb-2">Other participants</div>
+                <div className="flex -space-x-2 items-center">
+                  <Avatar name="Sam" size={28} src="/assets/img/avatar-sam.png" />
+                  <Avatar name="Dev" size={28} src="/assets/img/avatar-dev.png" />
+                  <Avatar name="Ops" size={28} src="/assets/img/avatar-ops.png" />
+                  <div className="w-7 h-7 rounded-full bg-slate-800 text-xs text-slate-200 flex items-center justify-center">+3</div>
+                </div>
+              </div>
             </div>
 
             <div className="bg-[#071022] rounded-lg p-4 border border-slate-800">
               <h3 className="text-sm font-semibold text-slate-100 mb-3">Related links</h3>
-              <ul className="text-sm text-slate-400 space-y-2">
-                <li><a className="text-slate-200 hover:underline" href={`/incidents/${incId}/timeline`}>Timeline</a></li>
-                <li><a className="text-slate-200 hover:underline" href={`/incidents/${incId}/logs`}>Logs</a></li>
-                <li><a className="text-slate-200 hover:underline" href={`/incidents/${incId}/metrics`}>Metrics</a></li>
-                <li><a className="text-slate-200 hover:underline" href={`/playbooks/${incId}`}>Runbook / Playbook</a></li>
+              <ul className="text-sm text-slate-400 space-y-3">
+                <li className="flex items-center gap-3">
+                  {/* Slack multicolor mark */}
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                    <rect x="3" y="3" width="6" height="6" rx="2" fill="#611f69" />
+                    <rect x="15" y="3" width="6" height="6" rx="2" fill="#ecb22e" />
+                    <rect x="3" y="15" width="6" height="6" rx="2" fill="#36c5f0" />
+                    <rect x="15" y="15" width="6" height="6" rx="2" fill="#e01e5a" />
+                  </svg>
+                  <a className="text-slate-200 hover:underline" href={`https://slack.com/app_redirect?channel=inc-${incId}`} target="_blank" rel="noopener noreferrer">#inc-{incId}</a>
+                </li>
+
+                <li className="flex items-center gap-3">
+                  {/* Microsoft Teams simplified mark */}
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                    <rect x="2" y="4" width="7" height="16" rx="2" fill="#6264A7" />
+                    <circle cx="17" cy="9" r="4" fill="#6264A7" />
+                    <path d="M15 11V7l3 2-3 2z" fill="#fff" opacity="0.95" />
+                  </svg>
+                  <a className="text-slate-200 hover:underline" href={`https://teams.microsoft.com/l/call/0/0?users=incident-${incId}@example.com`} target="_blank" rel="noopener noreferrer">Join call</a>
+                </li>
+
+                <li className="flex items-center gap-3">
+                  {/* PagerDuty simplified mark */}
+                  <svg className="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+                    <circle cx="12" cy="12" r="10" fill="#FF7A00" />
+                    <path d="M12 7c1.1 0 2 .9 2 2v6c0 1.1-.9 2-2 2s-2-.9-2-2V9c0-1.1.9-2 2-2z" fill="#fff" />
+                  </svg>
+                  <a className="text-slate-200 hover:underline" href={`https://yourcompany.pagerduty.com/incidents/${incId}`} target="_blank" rel="noopener noreferrer">{incId}</a>
+                </li>
+
               </ul>
             </div>
           </div>
 
-          <div className="flex-1 bg-[#071022] rounded-lg p-4 border border-slate-800">
-            <div className="w-full h-[640px] flex items-center justify-center bg-slate-900/20 rounded overflow-hidden">
-              <img src={imgs[mainIdx]} alt="Incident screen" className="max-h-full max-w-full object-contain" />
+          <div className="flex-1 flex flex-col gap-4">
+            <div className="bg-[#071022] rounded-lg p-4 border border-slate-800">
+              <h2 className="text-lg font-semibold text-slate-100 mb-3">Incident details</h2>
+
+              <div className="mb-4">
+                <label className="block text-xs text-slate-400 mb-1">Description</label>
+                <textarea
+                  value={(window as any).__rl_incident_description || ''}
+                  onChange={(e) => { (window as any).__rl_incident_description = e.target.value; const ev = new Event('rl:desc:change'); window.dispatchEvent(ev) }}
+                  placeholder="Describe the incident, observed behavior, and any important context."
+                  className="w-full h-32 bg-transparent border border-slate-800 rounded px-3 py-2 text-slate-100 resize-vertical"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs text-slate-400 mb-1">Attachments</label>
+                <div className="flex items-center gap-2">
+                  <input id="rl-attach-input" type="file" multiple className="text-sm text-slate-200" />
+                  <button id="rl-attach-clear" className="text-xs px-2 py-1 rounded bg-slate-800 text-slate-200">Clear</button>
+                </div>
+
+                <div id="rl-attach-list" className="mt-3 text-sm text-slate-400 space-y-2"></div>
+                <div className="mt-3 text-xs text-slate-500">Attach screenshots, logs or other files. Files are stored locally in the browser for this demo.</div>
+              </div>
+
+              <script dangerouslySetInnerHTML={{__html: `
+                (function(){
+                  const input = document.getElementById('rl-attach-input');
+                  const clearBtn = document.getElementById('rl-attach-clear');
+                  const list = document.getElementById('rl-attach-list');
+                  if(!input||!list) return;
+                  const filesState = (window as any).__rl_files = (window as any).__rl_files || [];
+
+                  function render() {
+                    list.innerHTML = '';
+                    filesState.forEach((f:any, idx:number) => {
+                      const row = document.createElement('div');
+                      row.className = 'flex items-center justify-between bg-slate-900/20 px-3 py-2 rounded';
+                      const left = document.createElement('div');
+                      left.className = 'flex items-center gap-3';
+                      const name = document.createElement('div');
+                      name.className = 'text-slate-100';
+                      name.textContent = f.name + ' (' + Math.round(f.size/1024) + ' KB)';
+                      left.appendChild(name);
+                      row.appendChild(left);
+                      const rm = document.createElement('button');
+                      rm.className = 'text-xs px-2 py-1 rounded bg-slate-800 text-slate-200';
+                      rm.textContent = 'Remove';
+                      rm.addEventListener('click', ()=>{ filesState.splice(idx,1); render(); });
+                      row.appendChild(rm);
+                      list.appendChild(row);
+                    });
+                  }
+
+                  input.addEventListener('change', (e:any)=>{
+                    const fl = Array.from(e.target.files || []);
+                    for(const f of fl) filesState.push(f);
+                    render();
+                    input.value = '';
+                  });
+
+                  clearBtn?.addEventListener('click', ()=>{ filesState.length = 0; render(); });
+
+                  render();
+                })();
+              `}} />
             </div>
-            <div className="mt-3 text-sm text-slate-400">Showing screen {mainIdx + 1} of {imgs.length} — mapped to incident {incId} for preview purposes.</div>
+
+            <div className="bg-[#071022] rounded-lg p-4 border border-slate-800">
+              <h3 className="text-sm font-semibold text-slate-100 mb-3">Mitigation steps</h3>
+
+              <div id="rl-mitigation-table-wrapper" className="overflow-x-auto" style={{display: 'none'}}>
+                <table className="w-full text-sm table-fixed">
+                  <thead>
+                    <tr className="text-slate-400 text-left">
+                      <th className="w-12 px-2">&nbsp;</th>
+                      <th className="px-2">Step</th>
+                      <th className="w-28 px-2">Status</th>
+                      <th className="w-20 px-2">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody id="rl-mitigation-tbody" className="text-slate-200"></tbody>
+                </table>
+              </div>
+
+              <form id="rl-mitigation-form" className="mt-3 flex gap-2 items-center" onSubmit={(e) => { e.preventDefault(); const input = document.getElementById('rl-mitigation-input') as HTMLInputElement | null; if (input) { const v = input.value.trim(); if (v) { try { if (typeof (window as any).__addMitigation === 'function') { (window as any).__addMitigation(v); } else { try { window.dispatchEvent(new CustomEvent('rl:addMitigation', { detail: v })); } catch(e){} setTimeout(()=>{ if (typeof (window as any).__addMitigation === 'function') { try { (window as any).__addMitigation(v); } catch(e){} } }, 150); } } catch(err){ /* swallow */ } } input.value = ''; } }}>
+                <input id="rl-mitigation-input" placeholder="Add step..." className="flex-1 bg-transparent border border-slate-800 rounded px-3 py-2 text-slate-100 text-sm" />
+                <button className="text-xs px-3 py-2 rounded bg-violet-600 text-white">Add</button>
+              </form>
+
+              <script dangerouslySetInnerHTML={{__html: `
+                (function(){
+                  const wrapper = document.getElementById('rl-mitigation-table-wrapper');
+                  const tbody = document.getElementById('rl-mitigation-tbody');
+                  if(!tbody) return;
+                  const storageKey = 'rl_mitigations_v1';
+                  let state = [];
+                  try {
+                    const raw = localStorage.getItem(storageKey);
+                    state = raw ? JSON.parse(raw) : [];
+                  } catch(e) { state = []; }
+
+                  function persist(){ try{ localStorage.setItem(storageKey, JSON.stringify(state)); }catch(e){} }
+                  function updateWrapper(){ if(!wrapper) return; wrapper.style.display = state.length ? '' : 'none'; }
+
+                  function render(){
+                    tbody.innerHTML = '';
+                    state.forEach((s:any, idx:number)=>{
+                      const tr = document.createElement('tr');
+                      tr.className = 'align-top border-t border-slate-800';
+
+                      const tdCb = document.createElement('td');
+                      tdCb.className = 'px-2 py-3';
+                      const cb = document.createElement('input');
+                      cb.type = 'checkbox';
+                      cb.checked = !!s.done;
+                      cb.addEventListener('change', ()=>{ state[idx].done = cb.checked; render(); persist(); updateWrapper(); });
+                      tdCb.appendChild(cb);
+                      tr.appendChild(tdCb);
+
+                      const tdText = document.createElement('td');
+                      tdText.className = 'px-2 py-3';
+                      const txt = document.createElement('div');
+                      txt.className = 'text-slate-100';
+                      txt.textContent = s.text;
+                      if(s.done) txt.style.textDecoration = 'line-through';
+                      tdText.appendChild(txt);
+                      tr.appendChild(tdText);
+
+                      const tdStatus = document.createElement('td');
+                      tdStatus.className = 'px-2 py-3 text-slate-300';
+                      tdStatus.textContent = s.done ? 'Done' : 'TODO';
+                      tr.appendChild(tdStatus);
+
+                      const tdAct = document.createElement('td');
+                      tdAct.className = 'px-2 py-3';
+                      const rm = document.createElement('button');
+                      rm.className = 'text-xs px-2 py-1 rounded bg-slate-800 text-slate-200';
+                      rm.textContent = 'Remove';
+                      rm.addEventListener('click', ()=>{ state.splice(idx,1); render(); persist(); updateWrapper(); });
+                      tdAct.appendChild(rm);
+                      tr.appendChild(tdAct);
+
+                      tbody.appendChild(tr);
+                    });
+                    updateWrapper();
+                    persist();
+                  }
+
+                  function __addMitigation_internal(text:any){ if(!text) return; state.push({text: String(text), done:false}); render(); }
+                  (window as any).__addMitigation = __addMitigation_internal;
+                  window.addEventListener('rl:addMitigation', function(e:any){ __addMitigation_internal(e && e.detail ? e.detail : e); });
+
+                  render();
+                })();
+              `}} />
+            </div>
           </div>
 
           <aside className="w-full lg:w-80 flex flex-col gap-4">

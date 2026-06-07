@@ -7,6 +7,9 @@ from uuid import UUID, uuid4
 class Error:
     message: str
 
+@dataclass(frozen=True)
+class NotFound:
+    message: str
 
 @dataclass(frozen=True)
 class ValidationError:
