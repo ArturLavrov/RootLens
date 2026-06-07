@@ -86,6 +86,36 @@ function IncidentPage() {
 
         {/* Main content */}
         <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left widgets column */}
+          <div className="w-full lg:w-64 flex flex-col gap-4">
+            <div className="bg-[#071022] rounded-lg p-4 border border-slate-800">
+              <h3 className="text-sm font-semibold text-slate-100 mb-3">Participants</h3>
+              <div className="flex items-center gap-3">
+                <Avatar name="On Call Engineer" size={40} src="/assets/img/avatar-oncall.png" />
+                <div className="flex-1">
+                  <div className="text-sm text-slate-100 font-medium">Alex Johnson</div>
+                  <div className="text-xs text-slate-400">On-call · SRE</div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <a href="tel:+123456789" className="text-xs px-2 py-1 rounded bg-slate-800 text-slate-200">Call</a>
+                  <a href="mailto:alex@example.com" className="text-xs px-2 py-1 rounded bg-slate-800 text-slate-200">Email</a>
+                </div>
+              </div>
+
+              <div className="mt-3 text-xs text-slate-400">Other participants: <span className="text-slate-200">Samantha, Priya</span></div>
+            </div>
+
+            <div className="bg-[#071022] rounded-lg p-4 border border-slate-800">
+              <h3 className="text-sm font-semibold text-slate-100 mb-3">Related links</h3>
+              <ul className="text-sm text-slate-400 space-y-2">
+                <li><a className="text-slate-200 hover:underline" href={`/incidents/${incId}/timeline`}>Timeline</a></li>
+                <li><a className="text-slate-200 hover:underline" href={`/incidents/${incId}/logs`}>Logs</a></li>
+                <li><a className="text-slate-200 hover:underline" href={`/incidents/${incId}/metrics`}>Metrics</a></li>
+                <li><a className="text-slate-200 hover:underline" href={`/playbooks/${incId}`}>Runbook / Playbook</a></li>
+              </ul>
+            </div>
+          </div>
+
           <div className="flex-1 bg-[#071022] rounded-lg p-4 border border-slate-800">
             <div className="w-full h-[640px] flex items-center justify-center bg-slate-900/20 rounded overflow-hidden">
               <img src={imgs[mainIdx]} alt="Incident screen" className="max-h-full max-w-full object-contain" />
