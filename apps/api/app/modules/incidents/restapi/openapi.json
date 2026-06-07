@@ -1,1 +1,364 @@
-{"openapi":"3.1.0","info":{"title":"RootLens API","version":"0.1.0"},"paths":{"/api/v1/incidents":{"get":{"tags":["Incidents"],"summary":"Get Incidents","operationId":"get_incidents_api_v1_incidents_get","responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"items":{"$ref":"#/components/schemas/IncidentResponse"},"type":"array","title":"Response Get Incidents Api V1 Incidents Get"}}}}}},"post":{"tags":["Incidents"],"summary":"Create Incident","operationId":"create_incident_api_v1_incidents_post","requestBody":{"content":{"application/json":{"schema":{"$ref":"#/components/schemas/CreateIncidentRequest"}}},"required":true},"responses":{"201":{"description":"Successful Response","content":{"application/json":{"schema":{}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}},"/api/v1/incidents/{id}":{"get":{"tags":["Incidents"],"summary":"Get Incident","operationId":"get_incident_api_v1_incidents__id__get","parameters":[{"name":"id","in":"path","required":true,"schema":{"type":"string","title":"Id"}}],"responses":{"200":{"description":"Successful Response","content":{"application/json":{"schema":{"$ref":"#/components/schemas/IncidentResponse"}}}},"422":{"description":"Validation Error","content":{"application/json":{"schema":{"$ref":"#/components/schemas/HTTPValidationError"}}}}}}}},"components":{"schemas":{"ClientRequest":{"properties":{"id":{"type":"string","title":"Id"},"name":{"type":"string","title":"Name"}},"type":"object","required":["id","name"],"title":"ClientRequest"},"ClientResponse":{"properties":{"id":{"type":"string","title":"Id"},"name":{"type":"string","title":"Name"}},"type":"object","required":["id","name"],"title":"ClientResponse"},"CommunicationChannelResponse":{"properties":{"id":{"type":"string","title":"Id"},"display_name":{"type":"string","title":"Display Name"},"type":{"type":"string","title":"Type"},"link":{"type":"string","title":"Link"}},"type":"object","required":["id","display_name","type","link"],"title":"CommunicationChannelResponse"},"CreateIncidentRequest":{"properties":{"title":{"type":"string","title":"Title"},"severity":{"type":"string","title":"Severity"},"description":{"type":"string","title":"Description"},"env":{"type":"string","title":"Env"},"affected_clients":{"items":{"$ref":"#/components/schemas/ClientRequest"},"type":"array","title":"Affected Clients"},"affects_all_clients":{"type":"boolean","title":"Affects All Clients","default":false}},"type":"object","required":["title","severity","description","env","affected_clients"],"title":"CreateIncidentRequest"},"EmployeeResponse":{"properties":{"id":{"type":"string","title":"Id"},"display_name":{"type":"string","title":"Display Name"},"email":{"type":"string","title":"Email"},"role":{"type":"string","title":"Role"},"is_active":{"type":"boolean","title":"Is Active"}},"type":"object","required":["id","display_name","email","role","is_active"],"title":"EmployeeResponse"},"HTTPValidationError":{"properties":{"detail":{"items":{"$ref":"#/components/schemas/ValidationError"},"type":"array","title":"Detail"}},"type":"object","title":"HTTPValidationError"},"IncidentResponse":{"properties":{"id":{"type":"string","title":"Id"},"public_id":{"type":"string","title":"Public Id"},"title":{"type":"string","title":"Title"},"description":{"type":"string","title":"Description"},"severity":{"type":"string","title":"Severity"},"affected_clients":{"items":{"$ref":"#/components/schemas/ClientResponse"},"type":"array","title":"Affected Clients"},"reported_date":{"type":"string","format":"date-time","title":"Reported Date"},"created_on":{"type":"string","format":"date-time","title":"Created On"},"modified_on":{"type":"string","format":"date-time","title":"Modified On"},"participants":{"items":{"$ref":"#/components/schemas/EmployeeResponse"},"type":"array","title":"Participants"},"status":{"type":"string","title":"Status"},"priority":{"type":"string","title":"Priority"},"impact":{"type":"string","title":"Impact"},"communication_channels":{"items":{"$ref":"#/components/schemas/CommunicationChannelResponse"},"type":"array","title":"Communication Channels"},"mitigation_steps":{"items":{"$ref":"#/components/schemas/MitigationStepResponse"},"type":"array","title":"Mitigation Steps"}},"type":"object","required":["id","public_id","title","description","severity","affected_clients","reported_date","created_on","modified_on","participants","status","priority","impact","communication_channels","mitigation_steps"],"title":"IncidentResponse"},"MitigationStepResponse":{"properties":{"id":{"type":"string","title":"Id"},"order":{"type":"integer","title":"Order"},"text":{"type":"string","title":"Text"},"owner":{"$ref":"#/components/schemas/EmployeeResponse"}},"type":"object","required":["id","order","text","owner"],"title":"MitigationStepResponse"},"ValidationError":{"properties":{"loc":{"items":{"anyOf":[{"type":"string"},{"type":"integer"}]},"type":"array","title":"Location"},"msg":{"type":"string","title":"Message"},"type":{"type":"string","title":"Error Type"},"input":{"title":"Input"},"ctx":{"type":"object","title":"Context"}},"type":"object","required":["loc","msg","type"],"title":"ValidationError"}}}}
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "RootLens API",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/api/v1/incidents": {
+      "get": {
+        "tags": ["Incidents"],
+        "summary": "Get Incidents",
+        "operationId": "get_incidents",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/IncidentResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": ["Incidents"],
+        "summary": "Create Incident",
+        "operationId": "create_incident",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateIncidentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/incidents/{id}": {
+      "get": {
+        "tags": ["Incidents"],
+        "summary": "Get Incident",
+        "operationId": "get_incident",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Incident Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": ["Incidents"],
+        "summary": "Update Incident",
+        "operationId": "update_incident",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateIncidentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IncidentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Incident Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ClientRequest": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" }
+        }
+      },
+      "ClientResponse": {
+        "type": "object",
+        "required": ["id", "name"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" }
+        }
+      },
+      "ParticipantRequest": {
+        "type": "object",
+        "required": ["id", "name", "email"],
+        "properties": {
+          "id": { "type": "string" },
+          "name": { "type": "string" },
+          "email": { "type": "string" }
+        }
+      },
+      "CreateIncidentRequest": {
+        "type": "object",
+        "required": [
+          "title",
+          "severity",
+          "description",
+          "environment",
+          "affected_clients"
+        ],
+        "properties": {
+          "title": { "type": "string" },
+          "severity": { "type": "string" },
+          "description": { "type": "string" },
+          "environment": { "type": "string" },
+          "affected_clients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClientRequest"
+            }
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParticipantRequest"
+            },
+            "default": []
+          },
+          "affects_all_clients": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "UpdateIncidentRequest": {
+        "type": "object",
+        "properties": {
+          "title": { "type": "string" },
+          "severity": { "type": "string" },
+          "description": { "type": "string" },
+          "environment": { "type": "string" },
+          "affected_clients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClientRequest"
+            }
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ParticipantRequest"
+            }
+          },
+          "affects_all_clients": {
+            "type": "boolean"
+          }
+        }
+      },
+      "EmployeeResponse": {
+        "type": "object",
+        "required": ["id", "display_name", "email", "role", "is_active"],
+        "properties": {
+          "id": { "type": "string" },
+          "display_name": { "type": "string" },
+          "email": { "type": "string" },
+          "role": { "type": "string" },
+          "is_active": { "type": "boolean" }
+        }
+      },
+      "CommunicationChannelResponse": {
+        "type": "object",
+        "required": ["id", "display_name", "type", "link"],
+        "properties": {
+          "id": { "type": "string" },
+          "display_name": { "type": "string" },
+          "type": { "type": "string" },
+          "link": { "type": "string" }
+        }
+      },
+      "MitigationStepResponse": {
+        "type": "object",
+        "required": ["id", "order", "text", "owner"],
+        "properties": {
+          "id": { "type": "string" },
+          "order": { "type": "integer" },
+          "text": { "type": "string" },
+          "owner": {
+            "$ref": "#/components/schemas/EmployeeResponse"
+          }
+        }
+      },
+      "IncidentResponse": {
+        "type": "object",
+        "required": [
+          "id",
+          "public_id",
+          "title",
+          "description",
+          "severity",
+          "environment",
+          "affected_clients",
+          "affects_all_clients",
+          "reported_date",
+          "created_on",
+          "modified_on",
+          "participants",
+          "status",
+          "priority",
+          "impact",
+          "communication_channels",
+          "mitigation_steps"
+        ],
+        "properties": {
+          "id": { "type": "string" },
+          "public_id": { "type": "string" },
+          "title": { "type": "string" },
+          "description": { "type": "string" },
+          "severity": { "type": "string" },
+          "environment": { "type": "string" },
+          "affected_clients": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ClientResponse"
+            }
+          },
+          "affects_all_clients": {
+            "type": "boolean"
+          },
+          "reported_date": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "created_on": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "modified_on": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "participants": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmployeeResponse"
+            }
+          },
+          "status": { "type": "string" },
+          "priority": { "type": "string" },
+          "impact": { "type": "string" },
+          "communication_channels": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CommunicationChannelResponse"
+            }
+          },
+          "mitigation_steps": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MitigationStepResponse"
+            }
+          }
+        }
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "required": ["message"],
+        "properties": {
+          "message": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

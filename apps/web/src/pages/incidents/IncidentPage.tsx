@@ -4,6 +4,103 @@ import AppShell from '../../shared/components/layout/AppShell'
 import Avatar from '../../shared/components/ui/Avatar'
 import CreateIncidentModal from './CreateIncidentModal'
 
+function InviteModal({ open, onClose, onAdd, existing } : { open:boolean; onClose: ()=>void; onAdd: (items:any[])=>void; existing:any[] }) {
+  if(!open) return null;
+  const SUGGESTED = [
+    { name: 'Alex Johnson', title: 'SRE', src: '/assets/img/avatar-alex.png' },
+    { name: 'Samantha Lee', title: 'Backend Engineer', src: '/assets/img/avatar-samantha.png' },
+    { name: 'Priya Nair', title: 'Frontend Engineer', src: '/assets/img/avatar-priya.png' },
+    { name: 'Mark Rivera', title: 'Product Owner', src: '/assets/img/avatar-mark.png' },
+    { name: 'Sam Ortiz', title: 'Developer', src: '/assets/img/avatar-sam.png' },
+    { name: 'Dev Ops', title: 'Operator', src: '/assets/img/avatar-dev.png' },
+    { name: 'Olga Petrova', title: 'QA', src: undefined }
+  ];
+  const [query, setQuery] = React.useState('');
+  const [selected, setSelected] = React.useState<any[]>([]);
+  React.useEffect(()=>{ if(!open){ setQuery(''); setSelected([]); } }, [open]);
+  const lower = query.trim().toLowerCase();
+  const filtered = SUGGESTED.filter(s => s.name.toLowerCase().includes(lower) || s.title.toLowerCase().includes(lower));
+  function toggle(item:any){ const exists = selected.find(s=>s.name===item.name); if(exists) setSelected(sel=>sel.filter(s=>s.name!==item.name)); else setSelected(sel=>[...sel,item]); }
+  function doAdd(){ if(selected.length) onAdd(selected); else if(query.trim()) onAdd([{ name: query.trim(), title: '', src: undefined }]); }
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose}></div>
+      <div className="relative w-full max-w-md bg-[#071022] rounded-lg p-4 border border-slate-800">
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-sm font-semibold text-slate-100">Invite participants</div>
+          <button onClick={onClose} className="text-slate-400">✕</button>
+        </div>
+        <div className="mb-3">
+          <input autoFocus value={query} onChange={(e)=>setQuery((e.target as HTMLInputElement).value)} placeholder="Search people" className="w-full bg-transparent border border-slate-800 rounded px-3 py-2 text-slate-100 text-sm" />
+        </div>
+        <div className="mb-3">
+          <div className="text-xs text-slate-400 mb-2">Suggested</div>
+          <div className="space-y-2 max-h-48 overflow-y-auto">
+            {filtered.map((s,idx)=>{
+              const already = existing.find(e=>e.name===s.name);
+              const isSel = !!selected.find(ss=>ss.name===s.name);
+              return (
+                <div key={idx} className={`flex items-center justify-between px-2 py-2 rounded ${already ? 'opacity-50' : 'hover:bg-slate-900/20'}`}>
+                  <div className="flex items-center gap-3">
+                    <Avatar name={s.name} size={36} src={s.src} />
+                    <div>
+                      <div className="text-sm text-slate-100">{s.name}</div>
+                      <div className="text-xs text-slate-400">{s.title}</div>
+                    </div>
+                  </div>
+                  <div>
+                    {already ? <div className="text-xs text-slate-400">Added</div> : (
+                      <button type="button" onClick={()=>toggle(s)} className={`text-xs px-2 py-1 rounded ${isSel? 'bg-slate-700 text-white':'bg-slate-800 text-slate-200'}`}>
+                        {isSel? 'Selected': 'Select'}
+                      </button>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+        <div className="mb-3">
+          <div className="text-xs text-slate-400 mb-2">Selected</div>
+          <div className="flex flex-wrap gap-2">
+            {selected.map((s,idx)=> (
+              <div key={idx} className="bg-slate-800 px-2 py-1 rounded flex items-center gap-2 text-sm">
+                <div className="text-slate-100">{s.name}</div>
+                <button onClick={()=>setSelected(sel=>sel.filter(x=>x.name!==s.name))} className="text-xs text-slate-400">✕</button>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="flex justify-end gap-2">
+          <button onClick={onClose} className="text-xs px-3 py-2 rounded bg-slate-800 text-slate-200">Cancel</button>
+          <button onClick={()=>{ doAdd(); onClose(); }} className="text-xs px-3 py-2 rounded bg-violet-600 text-white">Add</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+class ErrorBoundary extends React.Component<{children: React.ReactNode}, {error: any}> {
+  constructor(props: any) {
+    super(props)
+    this.state = { error: null }
+  }
+  componentDidCatch(error: any, info: any) {
+    console.error('ErrorBoundary caught error in IncidentPage:', error, info)
+    this.setState({ error })
+  }
+  render() {
+    if (this.state.error) {
+      return (
+        <div className="p-6">
+          <div className="bg-red-900 text-red-100 rounded p-4">An error occurred while rendering the Incident page. Check the browser console for details.</div>
+        </div>
+      )
+    }
+    return this.props.children as any
+  }
+}
+
 function IncidentPage() {
   const { incId } = useParams<{ incId: string }>()
   const navigate = useNavigate()
@@ -25,6 +122,21 @@ function IncidentPage() {
   const [description, setDescription] = React.useState<string>(() => (window as any).__rl_incident_description || '');
   React.useEffect(() => { try { (window as any).__rl_incident_description = description; const ev = new Event('rl:desc:change'); window.dispatchEvent(ev);} catch(e){} }, [description]);
 
+  // Editable title state
+  const [title, setTitle] = React.useState<string>(() => (window as any).__rl_incident_title || '');
+  React.useEffect(() => { try { (window as any).__rl_incident_title = title; } catch (e) {} }, [title]);
+
+  // Participants state & invite modal
+  const [participants, setParticipants] = React.useState(() => ([
+    { name: 'Alex Johnson', title: 'On-call · SRE', src: '/assets/img/avatar-alex.png' },
+    { name: 'Samantha Lee', title: 'Backend Engineer', src: '/assets/img/avatar-samantha.png' },
+    { name: 'Priya Nair', title: 'Frontend Engineer', src: '/assets/img/avatar-priya.png' },
+    { name: 'Mark Rivera', title: 'Product Owner', src: '/assets/img/avatar-mark.png' },
+  ]));
+  const [inviteOpen, setInviteOpen] = React.useState(false);
+  const [participantsLoading, setParticipantsLoading] = React.useState(false);
+  const [participantToRemove, setParticipantToRemove] = React.useState<any | null>(null);
+
   async function fetchIncidents() {
     setLoadingIncidents(true)
     try {
@@ -32,13 +144,22 @@ function IncidentPage() {
       if (!res.ok) return
       const data = await res.json()
       const mapped = (data || []).map((it: any) => ({
+        // keep both GUID (id) and public_id; UI shows public id but store GUID as guid
         id: it.public_id || it.id,
+        guid: it.id,
+        public_id: it.public_id,
         title: it.title,
         severity: (function(s){ const v = (s||'').toLowerCase(); if(v==='critical' || v==='high') return 'High'; if(v==='medium') return 'Medium'; return 'Low' })(it.severity),
         environment: it.env || it.environment || 'Production',
         startTime: it.reported_date || it.created_on || it.reported_at || ''
       }))
       setIncidents(mapped)
+      // store GUID for current route in localStorage for quick access
+      const found = mapped.find(m => m.guid === incId || m.id === incId || m.public_id === incId)
+      if(found && found.guid){
+        setGuidId(found.guid)
+        try{ localStorage.setItem(`rl_incident_guid_${incId}`, found.guid); }catch(e){}
+      }
       const total = (data && (data.total || data.count || (data.meta && data.meta.total))) || mapped.length
       setTotalIncidents(total)
     } catch (e) {
@@ -50,7 +171,97 @@ function IncidentPage() {
 
   React.useEffect(() => { fetchIncidents() }, [])
 
-  const current = incidents.find(i => i.id === incId) || { title: '', severity: 'Low', environment: '', startTime: '' }
+  const [saving, setSaving] = React.useState(false);
+  const [guidId, setGuidId] = React.useState<string | undefined>(() => {
+    try{ const k = localStorage.getItem(`rl_incident_guid_${window.location.pathname.split('/').pop()}`); return k || undefined }catch(e){ return undefined }
+  });
+
+  React.useEffect(()=>{
+    // whenever guidId changes persist for the current route param
+    try{ if(guidId) localStorage.setItem(`rl_incident_guid_${incId}`, guidId); }catch(e){}
+  }, [guidId, incId]);
+
+  // Fetch participants for the current incident from backend when GUID becomes available
+  async function fetchParticipantsForIncident(guid?: string){
+    setParticipantsLoading(true)
+    try{
+      const useGuid = guid || guidId || (incId && (()=>{ try{ return localStorage.getItem(`rl_incident_guid_${incId}`) }catch(e){return null} })());
+      if(!useGuid){ setParticipantsLoading(false); return }
+      const res = await fetch(`http://127.0.0.1:8000/api/v1/incidents/${useGuid}`, { headers: { Accept: 'application/json' } })
+      if(!res.ok){ console.warn('Failed to fetch incident details', res.status); setParticipantsLoading(false); return }
+      const data = await res.json()
+      const ps = (data.participants || []).map((p:any) => ({ name: p.name || p.display_name || p.email || p.id, title: (p.title || ''), src: undefined, email: p.email, id: p.id }))
+      setParticipants(ps)
+    }catch(e){ console.error('fetchParticipantsForIncident error', e) }finally{ setParticipantsLoading(false) }
+  }
+
+  React.useEffect(()=>{
+    fetchParticipantsForIncident()
+  }, [guidId, incId])
+
+  async function saveIncident({ participants: participantsOverride, title: titleOverride }: { participants?: any[]; title?: string } = {}){
+    if(!incId) return;
+    setSaving(true);
+    try{
+      const useGuid = guidId || (current && (current.guid || current.id));
+      if(!useGuid){
+        alert('Cannot save: incident GUID not available');
+        setSaving(false);
+        return;
+      }
+
+      const titleToUse = titleOverride ?? title ?? (current && current.title) ?? `Incident ${incId}`;
+      const participantsToUse = participantsOverride ?? participants ?? [];
+
+      const payload = {
+        id: useGuid,
+        title: titleToUse,
+        severity: current.severity || 'Low',
+        description,
+        env: current.environment || 'Production',
+        affected_clients: [],
+        participants: participantsToUse.map((p:any) => ({ id: (p.name||'').toLowerCase().replace(/\s+/g,'-'), name: p.name, email: (p.email || (p.name? p.name.split(" ").join('.').toLowerCase()+"@example.com": '')) })),
+        affects_all_clients: true,
+      };
+      const res = await fetch(`http://127.0.0.1:8000/api/v1/incidents/${useGuid}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      if(res.ok){
+        const data = await res.json();
+        // update local incident state if needed
+        setGuidId(useGuid);
+        // persist title locally
+        try{ localStorage.setItem(`rl_incident_title_${useGuid}`, titleToUse); }catch(e){}
+        alert('Incident saved');
+      } else if(res.status === 400){
+        const err = await res.json().catch(()=>({ detail: 'Bad request' }));
+        alert('Save failed: '+ (err.detail || JSON.stringify(err)));
+      } else {
+        const err = await res.text().catch(()=>null);
+        alert('Save failed with status '+res.status+': '+err);
+      }
+    }catch(e){
+      console.error(e);
+      alert('Save error: '+String(e));
+    }finally{ setSaving(false); }
+  }
+
+  const current = incidents.find(i => i.guid === incId || i.id === incId || i.public_id === incId) || { title: '', severity: 'Low', environment: '', startTime: '' }
+
+  React.useEffect(()=>{
+    // keep editable title in sync when incident loaded/changed
+    try{ setTitle(current.title || `Incident ${incId}`); }catch(e){}
+  }, [incidents, incId]);
+
+  // Debug: log types to help locate "can't convert Component to primitive type"
+  React.useEffect(()=>{
+    try{
+      const badParticipant = participants.find(p => typeof p.name !== 'string')
+      if(badParticipant){
+        console.error('Participant with non-string name detected', badParticipant)
+      }
+      if(typeof title !== 'string') console.error('Title is non-string', title)
+      if(current && typeof current.title !== 'string') console.error('current.title is non-string', current.title)
+    }catch(e){ console.error('debug check failed', e) }
+  }, [participants, title, current])
 
   function formatDate(iso?: string) {
     if (!iso) return ''
@@ -70,7 +281,7 @@ function IncidentPage() {
             <div className="flex items-start lg:items-center gap-4">
               <div>
                 <div className="flex items-center gap-3">
-                  <h1 className="text-2xl font-semibold text-slate-100">{current.title || `Incident ${incId}`}</h1>
+                  <input value={title} onChange={(e) => setTitle((e.target as HTMLInputElement).value)} onBlur={() => { saveIncident({ title }); }} className="text-2xl font-semibold text-slate-100 bg-transparent border-0 focus:outline-none" />
                   <div className="text-sm text-slate-400 bg-slate-800 px-2 py-1 rounded">ID: {incId}</div>
                   <span className="ml-2 inline-flex items-center px-3 py-1 rounded text-sm font-medium bg-red-600 text-white">{(current.severity || 'Low')}</span>
                 </div>
@@ -93,51 +304,38 @@ function IncidentPage() {
           <div className="w-full lg:w-64 flex flex-col gap-4">
             <div className="bg-[#071022] rounded-lg p-4 border border-slate-800">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-slate-100">Participants (7)</h3>
-                <button className="text-xs px-2 py-1 rounded bg-violet-600 text-white">Invite</button>
+                <h3 className="text-sm font-semibold text-slate-100">Participants ({participants.length})</h3>
+                <button onClick={() => setInviteOpen(true)} className="text-xs px-2 py-1 rounded bg-violet-600 text-white">Invite</button>
               </div>
 
               <div className="space-y-3">
-                <div className="flex items-center gap-3">
-                  <Avatar name="Alex Johnson" size={40} src="/assets/img/avatar-alex.png" />
-                  <div>
-                    <div className="text-sm text-slate-100 font-medium">Alex Johnson</div>
-                    <div className="text-xs text-slate-400">On-call · SRE</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Avatar name="Samantha Lee" size={40} src="/assets/img/avatar-samantha.png" />
-                  <div>
-                    <div className="text-sm text-slate-100 font-medium">Samantha Lee</div>
-                    <div className="text-xs text-slate-400">Backend Engineer</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Avatar name="Priya Nair" size={40} src="/assets/img/avatar-priya.png" />
-                  <div>
-                    <div className="text-sm text-slate-100 font-medium">Priya Nair</div>
-                    <div className="text-xs text-slate-400">Frontend Engineer</div>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-3">
-                  <Avatar name="Mark Rivera" size={40} src="/assets/img/avatar-mark.png" />
-                  <div>
-                    <div className="text-sm text-slate-100 font-medium">Mark Rivera</div>
-                    <div className="text-xs text-slate-400">Product Owner</div>
-                  </div>
-                </div>
+                {participantsLoading ? (
+                  <div className="text-sm text-slate-400">Loading participants...</div>
+                ) : participants.length === 0 ? (
+                  <div className="text-sm text-slate-400">No participants yet.</div>
+                ) : (
+                  participants.slice(0,4).map((p, i) => (
+                    <div key={i} tabIndex={0} className="group flex items-center justify-between gap-3 rounded px-2 py-1 focus-within:ring-2 focus-within:ring-violet-600">
+                      <div className="flex items-center gap-3">
+                        <Avatar name={p.name} size={40} src={p.src} />
+                        <div>
+                          <div className="text-sm text-slate-100 font-medium">{p.name}</div>
+                          <div className="text-xs text-slate-400">{p.title}</div>
+                        </div>
+                      </div>
+                      <div className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity">
+                        <button aria-label={`Remove ${p.name}`} title={`Remove ${p.name}`} onClick={() => setParticipantToRemove(p)} className="w-7 h-7 flex items-center justify-center rounded-full bg-slate-800 hover:bg-red-600 text-slate-200">✕</button>
+                      </div>
+                    </div>
+                  ))
+                )}
               </div>
 
               <div className="mt-4">
                 <div className="text-xs text-slate-400 mb-2">Other participants</div>
                 <div className="flex -space-x-2 items-center">
-                  <Avatar name="Sam" size={28} src="/assets/img/avatar-sam.png" />
-                  <Avatar name="Dev" size={28} src="/assets/img/avatar-dev.png" />
-                  <Avatar name="Ops" size={28} src="/assets/img/avatar-ops.png" />
-                  <div className="w-7 h-7 rounded-full bg-slate-800 text-xs text-slate-200 flex items-center justify-center">+3</div>
+                  {participants.slice(4,7).map((p,i)=> <Avatar key={i} name={p.name} size={28} src={p.src} />)}
+                  {participants.length > 7 ? <div className="w-7 h-7 rounded-full bg-slate-800 text-xs text-slate-200 flex items-center justify-center">+{participants.length-7}</div> : null}
                 </div>
               </div>
             </div>
@@ -191,6 +389,11 @@ function IncidentPage() {
                   placeholder="Describe the incident, observed behavior, and any important context."
                   className="w-full h-32 bg-transparent border border-slate-800 rounded px-3 py-2 text-slate-100 resize-vertical"
                 />
+                <div className="mt-3 flex justify-end">
+                  <button onClick={async ()=>{ await saveIncident(); }} disabled={saving} className={`text-sm px-3 py-2 rounded ${saving? 'bg-slate-700 text-slate-300':'bg-violet-600 text-white'}`}>
+                    {saving? 'Saving...':'Save'}
+                  </button>
+                </div>
               </div>
 
 <Attachments />            </div>
@@ -235,6 +438,10 @@ function IncidentPage() {
             <ChatWidget imgs={imgs} setMainIdx={setMainIdx} />
           </aside>
         </div>
+
+        <InviteModal open={inviteOpen} onClose={() => setInviteOpen(false)} onAdd={async (items:any[]) => { const newParticipants = (() => { const prev = participants; const names = new Set(prev.map(p=>p.name)); const toAdd = items.filter(i => !names.has(i.name)).map(i=>({ name: i.name, title: i.title || '', src: i.src || undefined })); return [...prev, ...toAdd]; })(); setParticipants(newParticipants); setInviteOpen(false); try{ await saveIncident({ participants: newParticipants }); }catch(e){ console.error('Auto-save after invite failed', e); } }} existing={participants} />
+
+        <ConfirmRemoveModal item={participantToRemove} onClose={() => setParticipantToRemove(null)} onConfirm={async () => { if(participantToRemove){ const newList = participants.filter(p => p.name !== participantToRemove.name); setParticipants(newList); setParticipantToRemove(null); try{ await saveIncident({ participants: newList }); }catch(e){ console.error('Auto-save after remove failed', e); } } }} />
 
         <CreateIncidentModal open={showCreateModal} onClose={() => setShowCreateModal(false)} onCreated={() => fetchIncidents()} />
       </div>
@@ -367,6 +574,23 @@ function Mitigations(){
       </form>
     </div>
   )
+}
+
+function ConfirmRemoveModal({ item, onClose, onConfirm } : { item:any|null; onClose: ()=>void; onConfirm: ()=>void }) {
+  if(!item) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/60" onClick={onClose}></div>
+      <div className="relative w-full max-w-sm bg-[#071022] rounded-lg p-4 border border-slate-800">
+        <div className="text-sm text-slate-100 mb-3">Remove {item.name} from this incident?</div>
+        <div className="text-xs text-slate-400 mb-4">This will remove the participant from the incident workspace.</div>
+        <div className="flex justify-end gap-2">
+          <button onClick={onClose} className="text-xs px-3 py-2 rounded bg-slate-800 text-slate-200">Cancel</button>
+          <button onClick={() => { onConfirm(); }} className="text-xs px-3 py-2 rounded bg-red-600 text-white">Remove</button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 function ChatWidget({ imgs, setMainIdx }: { imgs: string[]; setMainIdx: (n: number) => void }) {

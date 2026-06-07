@@ -17,6 +17,13 @@ class ValidationError:
 
 
 @dataclass(frozen=True)
+class Employee:
+    id: str
+    name: str
+    email: str
+
+
+@dataclass(frozen=True)
 class Client:
     id: str
     name: str
@@ -30,6 +37,7 @@ class DeclareIncidentRequest:
     severity: str
     title: str
     description: str
+    participants: list[Employee]
 
 
 class Incident:
@@ -49,6 +57,7 @@ class Incident:
         env: str,
         affected_clients: list[Client],
         affects_all_clients: bool,
+        participants: list["Employee"],
     ) -> None:
         self._id = incident_id
         self._public_id = public_id
@@ -64,6 +73,7 @@ class Incident:
         self._env = env
         self._affected_clients = affected_clients
         self._affects_all_clients = affects_all_clients
+        self._participants = participants
 
     @classmethod
     def create(
@@ -74,6 +84,7 @@ class Incident:
         env:str,
         affected_clients: list[Client],
         affects_all_clients: bool,
+        participants: list["Employee"],
     ) -> "Incident | ValidationError":
 
         if not title or title.isspace():
@@ -114,6 +125,7 @@ class Incident:
             env=env,
             affected_clients=affected_clients,
             affects_all_clients=affects_all_clients,
+            participants=participants,
         )
 
     @property
@@ -143,6 +155,10 @@ class Incident:
     @property
     def affects_all_clients(self) -> bool:
         return self._affects_all_clients
+
+    @property
+    def participants(self) -> list["Employee"]:
+        return self._participants
 
     @property
     def status(self) -> str:

@@ -36,3 +36,15 @@ async def get_all_incidents() -> list[Incident]:
     """
 
     return _incidents
+
+
+async def update_incident(incident: Incident) -> Incident | None:
+    """
+    Update an existing incident in the in-memory storage. Returns the updated incident or None if not found.
+    """
+    for idx, inc in enumerate(_incidents):
+        if inc.id == incident.id:
+            _incidents[idx] = incident
+            return incident
+    return None
+

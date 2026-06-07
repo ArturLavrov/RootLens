@@ -1,31 +1,44 @@
 import "@typespec/http";
 
 using Http;
-
-model Pet {
+model ClientRequest {
+  id: string;
   name: string;
-  age: int32;
 }
 
-model Store {
+model ParticipantRequest {
+  id: string;
   name: string;
-  address: Address;
+  email: string;
 }
 
-model Address {
-  street: string;
-  city: string;
+model CreateIncidentRequest {
+  title: string;
+  severity: string;
+  description: string;
+  env: string;
+  affected_clients: ClientRequest[];
+  participants: ParticipantRequest[];
+  affects_all_clients: bool;
 }
 
-@route("/pets")
-interface Pets {
-  list(@query filter: string): Pet[];
-  create(@body pet: Pet): Pet;
-  read(@path id: string): Pet;
+model IncidentResponse {
+  id: string;
+  public_id: string;
+  title: string;
+  description: string;
+  severity: string;
+  affected_clients: ClientRequest[];
+  participants: ParticipantRequest[];
+  reported_date: datetime;
+  created_on: datetime;
+  modified_on: datetime;
 }
 
-@route("/stores")
-interface Stores {
-  list(@query filter: string): Store[];
-  read(@path id: string): Store;
+@route("/incidents")
+interface Incidents {
+  list(): IncidentResponse[];
+  create(@body incident: CreateIncidentRequest): IncidentResponse;
+  read(@path id: string): IncidentResponse;
+  update(@path id: string, @body incident: CreateIncidentRequest): IncidentResponse;
 }

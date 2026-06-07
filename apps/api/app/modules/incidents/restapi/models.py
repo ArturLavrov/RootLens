@@ -50,6 +50,12 @@ class IncidentResponse(BaseModel):
     mitigation_steps: list[MitigationStepResponse]
 
 
+class ParticipantRequest(BaseModel):
+    id: str
+    name: str
+    email: str
+
+
 class ClientRequest(BaseModel):
     id: str
     name: str
@@ -64,4 +70,6 @@ class CreateIncidentRequest(BaseModel):
     description: str
     env: str
     affected_clients: list[ClientRequest]
+    participants: list[ParticipantRequest] = []
     affects_all_clients: bool = False
+
