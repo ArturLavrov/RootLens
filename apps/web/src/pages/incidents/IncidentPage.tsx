@@ -244,95 +244,7 @@ function IncidentPage() {
               `}} />
             </div>
 
-            <div className="bg-[#071022] rounded-lg p-4 border border-slate-800">
-              <h3 className="text-sm font-semibold text-slate-100 mb-3">Mitigation steps</h3>
-
-              <div id="rl-mitigation-table-wrapper" className="overflow-x-auto" style={{display: 'none'}}>
-                <table className="w-full text-sm table-fixed">
-                  <thead>
-                    <tr className="text-slate-400 text-left">
-                      <th className="w-12 px-2">&nbsp;</th>
-                      <th className="px-2">Step</th>
-                      <th className="w-28 px-2">Status</th>
-                      <th className="w-20 px-2">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody id="rl-mitigation-tbody" className="text-slate-200"></tbody>
-                </table>
-              </div>
-
-              <form id="rl-mitigation-form" className="mt-3 flex gap-2 items-center" onSubmit={(e) => { e.preventDefault(); const input = document.getElementById('rl-mitigation-input') as HTMLInputElement | null; if (input) { const v = input.value.trim(); if (v) { try { if (typeof (window as any).__addMitigation === 'function') { (window as any).__addMitigation(v); } else { try { window.dispatchEvent(new CustomEvent('rl:addMitigation', { detail: v })); } catch(e){} setTimeout(()=>{ if (typeof (window as any).__addMitigation === 'function') { try { (window as any).__addMitigation(v); } catch(e){} } }, 150); } } catch(err){ /* swallow */ } } input.value = ''; } }}>
-                <input id="rl-mitigation-input" placeholder="Add step..." className="flex-1 bg-transparent border border-slate-800 rounded px-3 py-2 text-slate-100 text-sm" />
-                <button className="text-xs px-3 py-2 rounded bg-violet-600 text-white">Add</button>
-              </form>
-
-              <script dangerouslySetInnerHTML={{__html: `
-                (function(){
-                  const wrapper = document.getElementById('rl-mitigation-table-wrapper');
-                  const tbody = document.getElementById('rl-mitigation-tbody');
-                  if(!tbody) return;
-                  const storageKey = 'rl_mitigations_v1';
-                  let state = [];
-                  try {
-                    const raw = localStorage.getItem(storageKey);
-                    state = raw ? JSON.parse(raw) : [];
-                  } catch(e) { state = []; }
-
-                  function persist(){ try{ localStorage.setItem(storageKey, JSON.stringify(state)); }catch(e){} }
-                  function updateWrapper(){ if(!wrapper) return; wrapper.style.display = state.length ? '' : 'none'; }
-
-                  function render(){
-                    tbody.innerHTML = '';
-                    state.forEach((s:any, idx:number)=>{
-                      const tr = document.createElement('tr');
-                      tr.className = 'align-top border-t border-slate-800';
-
-                      const tdCb = document.createElement('td');
-                      tdCb.className = 'px-2 py-3';
-                      const cb = document.createElement('input');
-                      cb.type = 'checkbox';
-                      cb.checked = !!s.done;
-                      cb.addEventListener('change', ()=>{ state[idx].done = cb.checked; render(); persist(); updateWrapper(); });
-                      tdCb.appendChild(cb);
-                      tr.appendChild(tdCb);
-
-                      const tdText = document.createElement('td');
-                      tdText.className = 'px-2 py-3';
-                      const txt = document.createElement('div');
-                      txt.className = 'text-slate-100';
-                      txt.textContent = s.text;
-                      if(s.done) txt.style.textDecoration = 'line-through';
-                      tdText.appendChild(txt);
-                      tr.appendChild(tdText);
-
-                      const tdStatus = document.createElement('td');
-                      tdStatus.className = 'px-2 py-3 text-slate-300';
-                      tdStatus.textContent = s.done ? 'Done' : 'TODO';
-                      tr.appendChild(tdStatus);
-
-                      const tdAct = document.createElement('td');
-                      tdAct.className = 'px-2 py-3';
-                      const rm = document.createElement('button');
-                      rm.className = 'text-xs px-2 py-1 rounded bg-slate-800 text-slate-200';
-                      rm.textContent = 'Remove';
-                      rm.addEventListener('click', ()=>{ state.splice(idx,1); render(); persist(); updateWrapper(); });
-                      tdAct.appendChild(rm);
-                      tr.appendChild(tdAct);
-
-                      tbody.appendChild(tr);
-                    });
-                    updateWrapper();
-                    persist();
-                  }
-
-                  function __addMitigation_internal(text:any){ if(!text) return; state.push({text: String(text), done:false}); render(); }
-                  (window as any).__addMitigation = __addMitigation_internal;
-                  window.addEventListener('rl:addMitigation', function(e:any){ __addMitigation_internal(e && e.detail ? e.detail : e); });
-
-                  render();
-                })();
-              `}} />
-            </div>
+            <Mitigations />
           </div>
 
           <aside className="w-full lg:w-80 flex flex-col gap-4">
@@ -377,6 +289,64 @@ function IncidentPage() {
         <CreateIncidentModal open={showCreateModal} onClose={() => setShowCreateModal(false)} onCreated={() => fetchIncidents()} />
       </div>
     </AppShell>
+  )
+}
+
+function Mitigations(){
+  const storageKey = 'rl_mitigations_v1';
+  const [items, setItems] = React.useState(() => {
+    try { return JSON.parse(localStorage.getItem(storageKey) || '[]'); } catch(e){ return []; }
+  });
+  const [text, setText] = React.useState('');
+
+  React.useEffect(()=>{ try{ localStorage.setItem(storageKey, JSON.stringify(items)); }catch(e){} }, [items]);
+
+  function add(e:any){ if(e && e.preventDefault) e.preventDefault(); const v = (text||'').trim(); if(!v) return; setItems(prev=>[...prev, { text: v, done: false }]); setText(''); }
+  function remove(idx:number){ setItems(prev => prev.filter((_,i)=> i!==idx)); }
+  function toggle(idx:number){ setItems(prev => prev.map((it,i)=> i===idx ? { ...it, done: !it.done } : it)); }
+
+  return (
+    <div className="bg-[#071022] rounded-lg p-4 border border-slate-800">
+      <h3 className="text-sm font-semibold text-slate-100 mb-3">Mitigation steps</h3>
+
+      {items.length > 0 ? (
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm table-fixed">
+            <thead>
+              <tr className="text-slate-400 text-left">
+                <th className="w-12 px-2">&nbsp;</th>
+                <th className="px-2">Step</th>
+                <th className="w-28 px-2">Status</th>
+                <th className="w-20 px-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="text-slate-200">
+              {items.map((it:any, idx:number) => (
+                <tr key={idx} className="align-top border-t border-slate-800">
+                  <td className="px-2 py-3">
+                    <input type="checkbox" checked={!!it.done} onChange={() => toggle(idx)} />
+                  </td>
+                  <td className="px-2 py-3">
+                    <div className="text-slate-100" style={{ textDecoration: it.done ? 'line-through' : 'none' }}>{it.text}</div>
+                  </td>
+                  <td className="px-2 py-3 text-slate-300">{it.done ? 'Done' : 'TODO'}</td>
+                  <td className="px-2 py-3">
+                    <button type="button" onClick={() => remove(idx)} className="text-xs px-2 py-1 rounded bg-slate-800 text-slate-200">Remove</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="text-sm text-slate-400">No mitigation steps yet. Add the first step below.</div>
+      )}
+
+      <form onSubmit={add} className="mt-3 flex gap-2 items-center">
+        <input value={text} onChange={(e)=>setText(e.target.value)} placeholder="Add step..." className="flex-1 bg-transparent border border-slate-800 rounded px-3 py-2 text-slate-100 text-sm" />
+        <button className="text-xs px-3 py-2 rounded bg-violet-600 text-white">Add</button>
+      </form>
+    </div>
   )
 }
 
