@@ -1,7 +1,6 @@
 # incidents/module.p
 from app.modules.incidents.models import Incident, DeclareIncidentRequest, Error, NotFound, ValidationError
 from app.modules.incidents.db import db
-from uuid import UUID
 
 async def declare_incident(request: DeclareIncidentRequest,) -> Incident | ValidationError:
     """
@@ -34,14 +33,18 @@ async def get_incident_by_id(incident_id: str) -> Incident | NotFound | Error:
     """
     Return incident by identifier. Accepts either UUID or public_id (e.g., INC-XXXX).
     """
-    # try UUID first
-    try:
-        iid = UUID(incident_id)
-        incident = await db.get_incident_by_id(iid)
-        if incident is not None:
-            return incident
-    except Exception:
-        return NotFound
+    # If it's a valid UUID string, look up by UUID
+    if Incident.is_valid_id(incident_id):
+        incident = await db.get_incident_by_id(incident_id)
+        if incident is None:
+            return NotFound(message="Incident not found")
+        return incident
+
+    # Otherwise, try to look up by public_id (human-readable)
+    incident = await db.get_incident_by_public_id(incident_id)
+    if incident is None:
+        return NotFound(message="Incident not found")
+    return incident
 
 async def update_incident(inc: Incident) -> Incident | Error:
     """

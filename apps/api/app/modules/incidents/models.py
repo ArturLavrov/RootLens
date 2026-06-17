@@ -190,3 +190,11 @@ class Incident:
 
     def _touch(self) -> None:
         self._modified_on = datetime.now(timezone.utc)
+
+    @staticmethod
+    def is_valid_id(inc_id: str) -> bool:
+        """Return True if inc_id is a valid UUID string."""
+        try:
+            return True
+        except (ValueError, TypeError):
+            return False

@@ -9,7 +9,8 @@ export default function CreateIncidentModal({ open, onClose, onCreated }: { open
   const [severity, setSeverity] = useState('CRITICAL')
   const [environment, setEnvironment] = useState('PROD')
   const [startTime, setStartTime] = useState('')
-  const [clients, setClients] = useState<string[]>([])
+  type ClientObj = { id: string; name: string }
+  const [clients, setClients] = useState<ClientObj[]>([])
   const [clientInput, setClientInput] = useState('')
 
   function getLogo(name: string) {
@@ -22,7 +23,14 @@ export default function CreateIncidentModal({ open, onClose, onCreated }: { open
     if (parts.length === 0) return
     setClients((prev) => {
       const next = [...prev]
-      for (const p of parts) if (!next.includes(p)) next.push(p)
+      for (const p of parts) {
+        // avoid duplicates by name
+        if (next.find((c) => c.name === p)) continue
+        const id = (typeof crypto !== 'undefined' && (crypto as any).randomUUID)
+          ? (crypto as any).randomUUID()
+          : `${p.replace(/\s+/g, '-').toLowerCase()}-${Date.now()}`
+        next.push({ id, name: p })
+      }
       return next
     })
   }
@@ -45,11 +53,12 @@ export default function CreateIncidentModal({ open, onClose, onCreated }: { open
     e.preventDefault()
     setLoading(true)
 
-    const affected_clients = clients.map((c) => ({ id: c.replace(/\s+/g, '-').toLowerCase(), name: c }))
+    // clients already contain { id, name } objects — send them as-is
+    const affected_clients = clients.map((c) => ({ id: c.id, name: c.name }))
     const payload = {
       title,
       severity,
-      description: `${title} (declared via UI)`,
+      description: description || `${title} (declared via UI)`,
       env: environment,
       affected_clients,
       affects_all_clients: false
@@ -132,11 +141,11 @@ export default function CreateIncidentModal({ open, onClose, onCreated }: { open
 
             <div className="flex flex-wrap gap-2 mb-2">
               {clients.map((c, idx) => (
-                <div key={idx} className="flex items-center gap-2 bg-slate-800 text-slate-100 px-2 py-1 rounded-full ring-1 ring-slate-900">
+                <div key={c.id} className="flex items-center gap-2 bg-slate-800 text-slate-100 px-2 py-1 rounded-full ring-1 ring-slate-900">
                   <div className="w-6 h-6 overflow-hidden rounded-full">
-                    <Avatar name={c} size={24} src={getLogo(c)} />
+                    <Avatar name={c.name} size={24} src={getLogo(c.name)} />
                   </div>
-                  <span className="text-xs">{c}</span>
+                  <span className="text-xs">{c.name}</span>
                   <button type="button" onClick={() => removeClient(idx)} className="ml-1 text-slate-400 hover:text-slate-200 text-xs">✕</button>
                 </div>
               ))}

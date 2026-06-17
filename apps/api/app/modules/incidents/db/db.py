@@ -4,7 +4,6 @@ from app.modules.incidents.models import Incident
 
 _incidents: list[Incident] = []
 
-
 async def save_incident(incident: Incident,) -> Incident:
     """
     Save incident in the in-memory storage.
@@ -15,16 +14,32 @@ async def save_incident(incident: Incident,) -> Incident:
     return incident
 
 
-async def get_incident_by_id(incident_id: UUID,) -> Incident | None:
+async def get_incident_by_id(incident_id: str,) -> Incident | None:
     """
     Return incident by identifier.
     """
+
+    uuid_inc_id = UUID(incident_id)
 
     return next(
         (
             incident
             for incident in _incidents
-            if incident.id == incident_id
+            if incident.id == uuid_inc_id
+        ),
+        None,
+    )
+
+
+async def get_incident_by_public_id(public_id: str) -> Incident | None:
+    """
+    Return incident by its public (human-readable) identifier, e.g. 'INC-XXXX'.
+    """
+    return next(
+        (
+            incident
+            for incident in _incidents
+            if incident.public_id == public_id
         ),
         None,
     )
