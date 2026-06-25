@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from app.modules.incidents.restapi.router import router as incidents_router
+from app.modules.employees.restapi.router import router as employees_router
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
@@ -25,3 +26,4 @@ async def general_exception_handler(request: Request, exc: Exception):
     return JSONResponse(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, content={"detail": "Internal Server Error"}, headers={"Access-Control-Allow-Origin": "*"})
 
 app.include_router(incidents_router, prefix="/api/v1")
+app.include_router(employees_router, prefix="/api/v1")
