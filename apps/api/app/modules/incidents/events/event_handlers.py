@@ -1,5 +1,5 @@
 from mediatr import Mediator
-from app.modules.employees.events.events import EmployeeDataChanged, EmployeeCreated
+from app.modules.employees.events.events import EmployeeDataChanged
 from app.modules.employees.db import db;
 from app.modules.employees.models import Employee
 
